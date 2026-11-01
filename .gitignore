@@ -1,0 +1,48 @@
+# Python virtual environments
+.venv/
+venv/
+env/
+
+# Python caches and temporary files
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.tmp
+*.temp
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Environment variables and credentials
+.env
+.env.*
+!.env.example
+.kaggle/
+**/.kaggle/
+kaggle.json
+**/kaggle.json
+.netrc
+*.pem
+*.key
+*token*
+*credential*
+
+# Downloaded model weights and caches
+.cache/
+cache/
+models/
+checkpoints/
+hf_cache/
+.huggingface/
+*.safetensors
+pytorch_model*.bin
+model.safetensors
+
+# Operating system files
+.DS_Store
+Thumbs.db
+Desktop.ini
+~$*

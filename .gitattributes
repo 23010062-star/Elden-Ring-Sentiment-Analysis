@@ -1,0 +1,12 @@
+# Use consistent text line endings for project files.
+*.md text eol=lf
+*.ipynb text eol=lf
+*.csv text eol=lf
+
+# Keep the downloaded source CSV byte-for-byte unchanged (override *.csv above).
+data/raw/*.csv -text -diff
+
+# Binary deliverables and model artifacts.
+*.docx binary
+*.png binary
+*.jpg binary
