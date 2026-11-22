@@ -17,7 +17,8 @@
 │   ├── 03_logistic_regression.ipynb
 │   ├── 04_sentence_transformer.ipynb
 │   ├── 05_snowflake_embed.ipynb
-│   └── 06_final_evaluation.ipynb
+│   ├── 06_final_evaluation.ipynb
+│   └── 07_finetune_transformer_colab.ipynb
 ├── report/
 │   └── report_draft.md
 ├── results/
@@ -33,6 +34,7 @@
 4. `04_sentence_transformer.ipynb`: thử `sentence-transformers/all-MiniLM-L6-v2` + Logistic Regression trên Validation.
 5. `05_snowflake_embed.ipynb`: thử `Snowflake/snowflake-arctic-embed-s` + Logistic Regression trên Validation.
 6. `06_final_evaluation.ipynb`: đánh giá một lần các cấu hình đã chọn trên Test và lưu bảng kết quả tại `results/final_comparison.csv`.
+7. `07_finetune_transformer_colab.ipynb`: chạy trên Colab T4 để thêm baseline Linear SVM/Complement NB, fine-tune DistilBERT với 3 seed, tính bootstrap CI và kiểm định McNemar, rồi xuất CSV (tải về `results/`).
 
 Quá trình loại nhóm review có nhãn mâu thuẫn và gộp nội dung lặp làm số mẫu giảm từ 9.763 xuống 7.946. Tập cuối gồm 5.562 mẫu Train, 1.192 Validation và 1.192 Test. Các notebook không sử dụng metadata tác giả/thời gian chơi làm đặc trưng.
 
@@ -52,7 +54,40 @@ Các mô hình cuối dùng `class_weight="balanced"`. Chỉ TF-IDF và Logistic
 | MiniLM + Logistic Regression | 0,8456 | 0,9843 | 0,8473 | 0,9107 | 0,6714 | 0,4321 |
 | Snowflake Arctic Embed S + Logistic Regression | 0,8641 | **0,9846** | 0,8672 | 0,9222 | 0,6929 | 0,4636 |
 
-> TF-IDF đạt Macro-F1 cao nhất trên Test. Các chỉ số là kết quả của một lần đánh giá với cấu hình đã chọn trên Validation; Test không được dùng để điều chỉnh mô hình.
+> Trong ba pipeline chính, TF-IDF đạt Macro-F1 cao nhất trên Test. Các chỉ số là kết quả của một lần đánh giá với cấu hình đã chọn trên Validation; Test không được dùng để điều chỉnh mô hình.
+
+## Thực nghiệm bổ sung (notebook 07)
+
+Notebook `07_finetune_transformer_colab.ipynb` bổ sung vào phạm vi so sánh:
+
+- Baseline **TF-IDF + Linear SVM (balanced)** và **TF-IDF + Complement NB**.
+- Fine-tune **`distilbert-base-uncased`** với cross-entropy có trọng số lớp, 3 seed (42, 43, 44), chọn epoch theo Macro-F1 trên Validation.
+- Khoảng tin cậy bootstrap 95% và kiểm định McNemar giữa DistilBERT và TF-IDF + Logistic Regression.
+- Xuất `results/errors_distilbert-base-uncased.csv` và `results/fine_tune_results_distilbert-base-uncased.csv`.
+
+Notebook cần GPU; khuyến nghị chạy trên **Google Colab T4**. Kết quả sẽ được cập nhật vào bảng so sánh và báo cáo sau khi chạy.
+
+### Baseline bổ sung (đã chạy, cùng split)
+
+| Phương pháp | Macro-F1 Validation | Macro-F1 Test | F1 lớp 0 Test |
+|---|---:|---:|---:|
+| Baseline đa số | 0,4817 | 0,4815 | 0,0000 |
+| TF-IDF + Logistic Regression (balanced) | 0,6827 | 0,7124 | 0,4836 |
+| TF-IDF + Linear SVM (balanced) | **0,7317** | **0,7296** | **0,5050** |
+| TF-IDF + Complement NB | 0,5019 | 0,5186 | 0,1059 |
+
+Linear SVM vượt TF-IDF + Logistic Regression trên cả Validation và Test; Complement NB thấp hơn nhiều. Đây là baseline bổ sung, chưa bao gồm DistilBERT.
+
+### Baseline bổ sung (đã chạy trên cùng split)
+
+| Phương pháp | Macro-F1 Validation | Macro-F1 Test | F1 lớp 0 Test |
+|---|---:|---:|---:|
+| Baseline đa số | 0,4817 | 0,4815 | 0,0000 |
+| TF-IDF + Logistic Regression (balanced) | 0,6827 | 0,7124 | 0,4836 |
+| TF-IDF + Linear SVM (balanced) | **0,7317** | **0,7296** | **0,5050** |
+| TF-IDF + Complement NB | 0,5019 | 0,5186 | 0,1059 |
+
+Linear SVM vượt TF-IDF + Logistic Regression trên cả Validation và Test; Complement NB thấp hơn nhiều. Đây là baseline bổ sung, chưa bao gồm DistilBERT.
 
 ## Cài đặt và chạy
 
@@ -68,4 +103,6 @@ jupyter lab
 
 Mở và chạy tuần tự các notebook `01_eda.ipynb` đến `06_final_evaluation.ipynb` trong `notebooks/`. Lần đầu chạy notebook 04–05 cần Internet để tải mô hình Hugging Face. Các Transformer được chạy trên CPU.
 
-Thư viện Python trực tiếp dùng trong notebook: **pandas, NumPy, Matplotlib, scikit-learn, Sentence Transformers, PyTorch và Jupyter/IPython**. Các phiên bản trong môi trường `.venv` hiện tại được ghi trong lệnh cài đặt phía trên.
+Notebook `07_finetune_transformer_colab.ipynb` cần GPU và được thiết kế cho Google Colab (T4). Trên Colab, notebook tự cài `transformers>=5,<6`, `accelerate`, `scikit-learn` và `scipy`; chạy Run all, sau đó tải các tệp trong `results/` về repo. Có thể cài trước bằng `pip install -r requirements-colab.txt`.
+
+Thư viện Python trực tiếp dùng trong notebook: **pandas, NumPy, Matplotlib, scikit-learn, Sentence Transformers, PyTorch, Transformers, SciPy và Jupyter/IPython**. Các phiên bản trong môi trường `.venv` hiện tại được ghi trong lệnh cài đặt phía trên; notebook 07 dùng thêm `accelerate` và được chạy trên Colab.
