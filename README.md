@@ -20,7 +20,9 @@
 │   ├── 06_final_evaluation.ipynb
 │   └── 07_finetune_transformer_colab.ipynb
 ├── report/
-│   └── report_draft.md
+│   ├── report_draft.md
+│   ├── Bao_cao_Elden_Ring_Phenikaa.docx
+│   └── EldenRing_Sentiment_Presentation.pptx
 ├── results/
 │   └── final_comparison.csv
 └── .venv/                            # Môi trường Python cục bộ
