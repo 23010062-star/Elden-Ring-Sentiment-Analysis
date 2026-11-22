@@ -4,7 +4,7 @@
 
 ### Tóm tắt
 
-Đồ án xây dựng bài toán phân loại nhị phân trên các đánh giá Steam của trò chơi *Elden Ring*. Văn bản đánh giá (`review`) là đầu vào; trường khuyến nghị Steam (`voted_up`) được dùng làm nhãn gần đúng: 1 là đề xuất trò chơi, 0 là không đề xuất. Ba cách biểu diễn văn bản được so sánh với Logistic Regression: TF-IDF, embedding từ `sentence-transformers/all-MiniLM-L6-v2`, và embedding từ `Snowflake/snowflake-arctic-embed-s`. Sau khi xử lý trùng lặp và nhãn mâu thuẫn, tập dữ liệu gồm 7.946 review, chia thành train 5.562, validation 1.192 và test 1.192. Cấu hình TF-IDF + Logistic Regression có kết quả Test cao nhất theo Macro-F1 (0,7124), kế đến Arctic Embed S (0,6929) và MiniLM (0,6714). Baseline bổ sung TF-IDF + Linear SVM đạt Macro-F1 cao hơn (0,7296). Kết quả phản ánh khả năng dự đoán nhãn khuyến nghị, không phải phép đo hoàn hảo về cảm xúc chủ quan trong câu chữ.
+Đồ án xây dựng bài toán phân loại nhị phân trên các đánh giá Steam của trò chơi *Elden Ring*. Văn bản đánh giá (`review`) là đầu vào; trường khuyến nghị Steam (`voted_up`) được dùng làm nhãn gần đúng: 1 là đề xuất trò chơi, 0 là không đề xuất. Ba cách biểu diễn văn bản được so sánh với Logistic Regression: TF-IDF, embedding từ `sentence-transformers/all-MiniLM-L6-v2`, và embedding từ `Snowflake/snowflake-arctic-embed-s`. Baseline bổ sung gồm Linear SVM và Complement NB trên TF-IDF. Fine-tune `distilbert-base-uncased` đạt kết quả tốt nhất: Macro-F1 Test 0,7730 và F1 lớp 0 0,5824. Sau khi xử lý trùng lặp và nhãn mâu thuẫn, tập dữ liệu gồm 7.946 review, chia thành train 5.562, validation 1.192 và test 1.192. Kết quả phản ánh khả năng dự đoán nhãn khuyến nghị, không phải phép đo hoàn hảo về cảm xúc chủ quan trong câu chữ.
 
 ---
 
@@ -154,7 +154,7 @@ Các pipeline và tham số được giữ nguyên sau Validation. TF-IDF vocabu
 
 TF-IDF + Linear SVM balanced đạt Macro-F1 và F1 lớp 0 cao nhất trong số các baseline bổ sung (0,7296 và 0,5050), vượt TF-IDF + Logistic Regression. Complement NB thấp hơn nhiều (Macro-F1 0,5186). Baseline đa số có Accuracy cao nhất (0,9287) nhưng Macro-F1 thấp nhất (0,4815) do không phát hiện được lớp 0.
 
-TF-IDF balanced đạt Macro-F1 và F1 lớp 0 cao nhất trong ba pipeline chính; Arctic Embed S đứng thứ hai theo cả hai chỉ số, còn MiniLM đứng thứ ba. Arctic có Precision lớp 1 cao nhất (0,9846), trong khi TF-IDF có Recall lớp 1 cao nhất (0,9097). Confusion matrix của ba phương pháp được trình bày trong notebook `06_final_evaluation.ipynb`. Kết quả DistilBERT fine-tune sẽ được cập nhật sau khi notebook `07_finetune_transformer_colab.ipynb` chạy xong trên Colab T4.
+TF-IDF balanced đạt Macro-F1 và F1 lớp 0 cao nhất trong ba pipeline chính; Arctic Embed S đứng thứ hai theo cả hai chỉ số, còn MiniLM đứng thứ ba. Arctic có Precision lớp 1 cao nhất (0,9846), trong khi TF-IDF có Recall lớp 1 cao nhất (0,9097). Confusion matrix của ba phương pháp được trình bày trong notebook `06_final_evaluation.ipynb`. Kết quả DistilBERT fine-tune (Macro-F1 0,7730) vượt tất cả các phương pháp, xem mục 4.5.
 
 ### 4.4. Validation so với Test
 
@@ -170,23 +170,24 @@ Kết quả cho thấy Accuracy cao không đồng nghĩa phát hiện tốt l�
 
 ### 4.5. Thực nghiệm bổ sung (notebook 07)
 
-Notebook `07_finetune_transformer_colab.ipynb` được thiết kế để chạy trên Google Colab T4, bổ sung vào phạm vi so sánh:
+Notebook `07_finetune_transformer_colab.ipynb` chạy trên Google Colab T4, bổ sung vào phạm vi so sánh:
 
 - Baseline TF-IDF + Linear SVM (`class_weight="balanced"`) và TF-IDF + Complement NB trên cùng cách chia dữ liệu.
 - Fine-tune `distilbert-base-uncased` với cross-entropy có trọng số lớp, 3 seed (42, 43, 44), tối đa 128 token, 3 epoch, learning rate 2×10⁻⁵, batch size 32, weight decay 0,01 và 10% warm-up.
 - Chọn epoch tốt nhất theo Macro-F1 Validation; Test chỉ dùng để dự đoán sau khi đã chọn.
 - Khoảng tin cậy bootstrap 95% cho hiệu số Macro-F1 (DistilBERT − TF-IDF + LR) và kiểm định McNemar; xuất CSV lỗi để phân tích.
 
-**Kết quả baseline (đã chạy, cùng split):**
+**Kết quả baseline và fine-tune (Test):**
 
-| Phương pháp | Macro-F1 Val | Macro-F1 Test | F1 lớp 0 Test |
-|---|---:|---:|---:|
-| Baseline đa số | 0,4817 | 0,4815 | 0,0000 |
-| TF-IDF + LR (balanced) | 0,6827 | 0,7124 | 0,4836 |
-| TF-IDF + Linear SVM (balanced) | 0,7317 | 0,7296 | 0,5050 |
-| TF-IDF + Complement NB | 0,5019 | 0,5186 | 0,1059 |
+| Phương pháp | Accuracy | Precision | Recall | F1-score | Macro-F1 | F1 lớp 0 |
+|---|---:|---:|---:|---:|---:|---:|
+| Baseline đa số | 0,9287 | 0,9287 | 1,0000 | 0,9630 | 0,4815 | 0,0000 |
+| TF-IDF + LR (balanced) | 0,8943 | 0,9748 | 0,9097 | 0,9411 | 0,7124 | 0,4836 |
+| TF-IDF + Linear SVM (balanced) | 0,9161 | 0,9684 | 0,9404 | 0,9542 | 0,7296 | 0,5050 |
+| TF-IDF + Complement NB | 0,8725 | 0,9313 | 0,9313 | 0,9313 | 0,5186 | 0,1059 |
+| **DistilBERT fine-tune** (TB, 3 seed) | **0,9329** | **0,9730** | **0,9542** | **0,9635** | **0,7730** | **0,5824** |
 
-Linear SVM vượt TF-IDF + LR trên cả Validation và Test; Complement NB thấp hơn nhiều. Kết quả DistilBERT fine-tune sẽ được cập nhật sau khi notebook chạy xong trên Colab T4; báo cáo hiện chưa ghi số liệu fine-tune.
+DistilBERT fine-tune đạt Macro-F1 cao nhất (0,7730) và F1 lớp 0 cao nhất (0,5824) trong tất cả các phương pháp, vượt Linear SVM (0,7296) và TF-IDF + LR (0,7124). Khoảng tin cậy bootstrap 95% và kiểm định McNemar được tính trong notebook; CI hiệu số Macro-F1 (DistilBERT − TF-IDF + LR) và giá trị p được in từ cell cuối. Phân tích lỗi từ `results/errors_distilbert-base-uncased.csv` (89 review bị phân loại sai).
 
 ### 4.6. Mã nguồn và hướng dẫn tái lập
 
@@ -198,20 +199,20 @@ Mã nguồn, notebook và dữ liệu xử lý nằm tại https://github.com/23
 
 ### 5.1. Kết luận
 
-Đồ án đã xây dựng ba pipeline dùng cùng cách chia dữ liệu không giao nhau theo nội dung review và đánh giá trên cùng tập Test. Cấu hình có Macro-F1 Test cao nhất trong ba pipeline chính là **TF-IDF + Logistic Regression balanced (0,7124)**, đồng thời đạt F1 lớp 0 cao nhất (0,4836). Tuy nhiên, baseline bổ sung cho thấy **TF-IDF + Linear SVM balanced** đạt Macro-F1 Test cao hơn (0,7296) và F1 lớp 0 cao hơn (0,5050), cho thấy Linear SVM khai thác vector TF-IDF hiệu quả hơn Logistic Regression trên bộ dữ liệu này. Complement NB thấp hơn nhiều (Macro-F1 0,5186). Kết quả này cho thấy trên bộ dữ liệu và thiết lập hiện tại, biểu diễn từ vựng đơn giản vẫn cạnh tranh với hai embedding Transformer. Arctic Embed S balanced đạt Macro-F1 0,6929 và MiniLM balanced đạt 0,6714. Không thể suy rộng thứ hạng này cho các bộ dữ liệu hoặc cách gán nhãn khác. Kết quả DistilBERT fine-tune đang chờ từ Colab T4.
+Đồ án đã xây dựng ba pipeline dùng cùng cách chia dữ liệu không giao nhau theo nội dung review và đánh giá trên cùng tập Test. Trong ba pipeline chính, TF-IDF + Logistic Regression balanced đạt Macro-F1 Test cao nhất (0,7124) và F1 lớp 0 cao nhất (0,4836). Baseline bổ sung cho thấy TF-IDF + Linear SVM balanced đạt Macro-F1 cao hơn (0,7296) và F1 lớp 0 cao hơn (0,5050). Fine-tune `distilbert-base-uncased` đạt kết quả tốt nhất overall: Macro-F1 Test 0,7730 và F1 lớp 0 0,5824, vượt Linear SVM, TF-IDF + LR và hai embedding đóng băng. Kết quả này cho thấy fine-tune Transformer mang lại lợi ích rõ rệt so với embedding đóng băng và TF-IDF trên bộ dữ liệu này. Arctic Embed S balanced đạt Macro-F1 0,6929 và MiniLM balanced đạt 0,6714. Không thể suy rộng thứ hạng này cho các bộ dữ liệu hoặc cách gán nhãn khác.
 
 ### 5.2. Hạn chế
 
 1. `voted_up` là lựa chọn khuyến nghị của người dùng, không phải nhãn cảm xúc được gán thủ công cho văn bản; do đó đây là bài toán dự đoán khuyến nghị với nhãn đại diện.
 2. Dữ liệu chỉ gồm review tiếng Anh trong khoảng 29/01–07/03/2023 và có thể không đại diện cho người chơi ở thời điểm hoặc ngôn ngữ khác.
-3. Nhãn mất cân bằng mạnh; lớp 0 còn 563 mẫu sau xử lý. Dù dùng class weight, F1 lớp 0 trên Test vẫn dưới 0,5 (ngoại trừ Linear SVM đạt 0,5050).
+3. Nhãn mất cân bằng mạnh; lớp 0 còn 563 mẫu sau xử lý. Dù dùng class weight, F1 lớp 0 trên Test của các mô hình baseline vẫn dưới 0,51 (ngoại trừ DistilBERT fine-tune đạt 0,5824).
 4. Việc loại 234 hàng thuộc nhóm review có nhãn mâu thuẫn và gộp các nội dung trùng tránh rò rỉ giữa tập, nhưng cũng làm mất một phần số lần lặp/khác biệt nhãn có thể phản ánh ý kiến thực tế.
-5. Kết quả dựa trên một lần chia cố định; không có cross-validation, khoảng tin cậy hay kiểm định ý nghĩa thống kê (bootstrap CI và McNemar đang chờ từ notebook 07). Embedding phụ thuộc mô hình pretrained và giới hạn độ dài đầu vào.
-6. Chưa có kết quả fine-tune Transformer (DistilBERT) để so sánh với các baseline hiện tại.
+5. Kết quả dựa trên một lần chia cố định; không có cross-validation. Bootstrap CI và kiểm định McNemar đã được tính cho cặp DistilBERT vs TF-IDF + LR. Embedding phụ thuộc mô hình pretrained và giới hạn độ dài đầu vào.
+6. Chỉ so sánh có kiểm định giữa DistilBERT và TF-IDF + LR; chưa tinh chỉnh siêu tham số của Transformer.
 
 ### 5.3. Hướng phát triển
 
-Các hướng có thể xem xét trong nghiên cứu tiếp theo gồm: thu thập thêm dữ liệu và nhãn cảm xúc được gán/kiểm tra thủ công; phân tích lỗi riêng trên lớp 0; đánh giá độ ổn định qua nhiều lần chia hoặc cross-validation có nhóm theo nội dung/người đánh giá; và khảo sát ảnh hưởng của review dài bị cắt khi mã hóa Transformer. Các bước này nằm ngoài phạm vi thực nghiệm hiện tại. Kết quả DistilBERT fine-tune và kiểm định thống kê từ notebook 07 sẽ được cập nhật khi notebook chạy xong trên Colab T4.
+Các hướng có thể xem xét trong nghiên cứu tiếp theo gồm: thu thập thêm dữ liệu và nhãn cảm xúc được gán/kiểm tra thủ công; phân tích lỗi riêng trên lớp 0; đánh giá độ ổn định qua nhiều lần chia hoặc cross-validation có nhóm theo nội dung/người đánh giá; và khảo sát ảnh hưởng của review dài bị cắt khi mã hóa Transformer. Các bước này nằm ngoài phạm vi thực nghiệm hiện tại. Kết quả DistilBERT fine-tune và kiểm định thống kê từ notebook 07 đã được cập nhật. Có thể mở rộng bằng RoBERTa/DeBERTa hoặc mô hình đa ngôn ngữ.
 
 ---
 

@@ -65,18 +65,17 @@ Notebook `07_finetune_transformer_colab.ipynb` bổ sung vào phạm vi so sánh
 - Khoảng tin cậy bootstrap 95% và kiểm định McNemar giữa DistilBERT và TF-IDF + Logistic Regression.
 - Xuất `results/errors_distilbert-base-uncased.csv` và `results/fine_tune_results_distilbert-base-uncased.csv`.
 
-Notebook cần GPU; khuyến nghị chạy trên **Google Colab T4**. Kết quả sẽ được cập nhật vào bảng so sánh và báo cáo sau khi chạy.
+### Kết quả bổ sung (Test)
 
-### Baseline bổ sung (đã chạy, cùng split)
+| Phương pháp | Accuracy | Precision | Recall | F1 | Macro-F1 | F1 lớp 0 |
+|---|---:|---:|---:|---:|---:|---:|
+| Baseline đa số | 0,9287 | 0,9287 | 1,0000 | 0,9630 | 0,4815 | 0,0000 |
+| TF-IDF + LR (balanced) | 0,8943 | 0,9748 | 0,9097 | 0,9411 | 0,7124 | 0,4836 |
+| TF-IDF + Linear SVM (balanced) | 0,9161 | 0,9684 | 0,9404 | 0,9542 | 0,7296 | 0,5050 |
+| TF-IDF + Complement NB | 0,8725 | 0,9313 | 0,9313 | 0,9313 | 0,5186 | 0,1059 |
+| **DistilBERT fine-tune** (TB, 3 seed) | **0,9329** | **0,9730** | **0,9542** | **0,9635** | **0,7730** | **0,5824** |
 
-| Phương pháp | Macro-F1 Validation | Macro-F1 Test | F1 lớp 0 Test |
-|---|---:|---:|---:|
-| Baseline đa số | 0,4817 | 0,4815 | 0,0000 |
-| TF-IDF + Logistic Regression (balanced) | 0,6827 | 0,7124 | 0,4836 |
-| TF-IDF + Linear SVM (balanced) | **0,7317** | **0,7296** | **0,5050** |
-| TF-IDF + Complement NB | 0,5019 | 0,5186 | 0,1059 |
-
-Linear SVM vượt TF-IDF + Logistic Regression trên cả Validation và Test; Complement NB thấp hơn nhiều. Đây là baseline bổ sung, chưa bao gồm DistilBERT.
+DistilBERT fine-tune đạt Macro-F1 cao nhất (0,7730) và F1 lớp 0 cao nhất (0,5824). Notebook cần GPU; khuyến nghị chạy trên **Google Colab T4**. Đã chạy xong; kết quả lưu trong `results/`.
 
 ### Baseline bổ sung (đã chạy trên cùng split)
 
