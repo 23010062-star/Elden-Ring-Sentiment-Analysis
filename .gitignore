@@ -41,6 +41,10 @@ hf_cache/
 pytorch_model*.bin
 model.safetensors
 
+# Notebook 07 Colab/local artifacts
+out/
+repo/
+
 # Operating system files
 .DS_Store
 Thumbs.db
