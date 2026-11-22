@@ -24,7 +24,11 @@
 │   ├── Bao_cao_Elden_Ring_Phenikaa.docx
 │   └── EldenRing_Sentiment_Presentation.pptx
 ├── results/
-│   └── final_comparison.csv
+│   ├── final_comparison.csv
+│   └── *.csv                      # kết quả notebook 07
+├── figures/
+│   ├── eda_fig1.png ... eda_fig4.png
+│   └── eval_confusion_matrix.png
 └── .venv/                            # Môi trường Python cục bộ
 ```
 
